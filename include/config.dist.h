@@ -9,3 +9,5 @@
 // #define DNS ""
 // #define GATEWAY ""
 // #define SUBNET ""
+
+#define OPENAI_TOKEN = "Bearer xxx"
