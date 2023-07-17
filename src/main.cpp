@@ -12,8 +12,10 @@ DynamicJsonDocument doc(1024);
 String payload = "{\"model\":\"gpt-3.5-turbo\",\"messages\":[{\"role\":\"system\",\"content\":\"Du bist eine KI die sich im Comodore 64 Computer befindet. Der Benutzer wird dir Fragen über den Comodore 64 stellen. Du sollst dem Benutzer helfen, einfache Programme in Basic zu schreiben, die im Comodore 64 laufen können, aber auch kurze Antworten zum Comodore 64 geben. Brich nicht den Charakter.\"},{\"role\":\"user\",\"content\":\"%s\"}],\"temperature\":0.7}";
 
 String serialInput;
+HTTPClient httpClient;
+
 void readSerialInput(String *inputString);
-String getOpenAiAnswer(String *inputString);
+String getOpenAiAnswer(HTTPClient *httpClient, String *inputString);
 
 void setup()
 {
@@ -123,44 +125,9 @@ void setup()
 
 	client.setTrustAnchors(&cert);
 
-	HTTPClient https;
-
-	https.begin(client, "https://api.openai.com/v1/chat/completions");
-	https.addHeader("Content-Type", "application/json");
-	https.addHeader("Authorization", OPENAI_TOKEN);
-	// int httpCode = https.POST(payload);
-	int httpCode = 0;
-
-	if (httpCode > 0)
-	{
-#ifdef ESP_DEBUG
-		Serial.printf("[HTTPS] POST... code: %d\n", httpCode);
-#endif
-
-		if (httpCode == HTTP_CODE_OK)
-		{
-			String response = https.getString();
-			// String response = https.getString(1024);  // optionally pre-reserve string to avoid reallocations in chunk mode
-			deserializeJson(doc, response);
-			String responseMessage = doc["choices"][0]["message"]["content"].as<String>();
-#ifdef ESP_DEBUG
-			Serial.println(responseMessage);
-#endif
-		}
-		else
-		{
-#ifdef ESP_DEBUG
-			Serial.printf("[HTTPS] POST... failed, error: %s\n", https.errorToString(httpCode).c_str());
-#endif
-		}
-		https.end();
-	}
-	else
-	{
-#ifdef ESP_DEBUG
-		Serial.printf("[HTTPS] Unable to connect\n");
-#endif
-	}
+	httpClient.begin(client, "https://api.openai.com/v1/chat/completions");
+	httpClient.addHeader("Content-Type", "application/json");
+	httpClient.addHeader("Authorization", OPENAI_TOKEN);
 }
 
 void loop()
@@ -170,7 +137,7 @@ void loop()
 	if (true == serialInput.endsWith(String('\n')))
 	{
 		serialInput.trim();
-		Serial.println(String("Given: ") + serialInput);
+		Serial.println(getOpenAiAnswer(&httpClient, &serialInput));
 		serialInput.clear();
 	}
 }
@@ -184,7 +151,42 @@ void readSerialInput(String *inputString)
 	}
 }
 
-String getOpenAiAnswer(String *inputString)
+String getOpenAiAnswer(HTTPClient *httpClient, String *inputString)
 {
-	return String();
+	String responseMessage;
+
+	int httpCode = httpClient->POST(payload);
+
+	if (httpCode > 0)
+	{
+#ifdef ESP_DEBUG
+		Serial.printf("[HTTPS] POST... code: %d\n", httpCode);
+#endif
+
+		if (httpCode == HTTP_CODE_OK)
+		{
+			String response = httpClient->getString();
+			// String response = httpClient->getString(1024);  // optionally pre-reserve string to avoid reallocations in chunk mode
+			deserializeJson(doc, response);
+			responseMessage = doc["choices"][0]["message"]["content"].as<String>();
+#ifdef ESP_DEBUG
+			Serial.println(responseMessage);
+#endif
+		}
+		else
+		{
+#ifdef ESP_DEBUG
+			Serial.printf("[HTTPS] POST... failed, error: %s\n", httpClient->errorToString(httpCode).c_str());
+#endif
+		}
+		httpClient->end();
+	}
+	else
+	{
+#ifdef ESP_DEBUG
+		Serial.printf("[HTTPS] Unable to connect\n");
+#endif
+	}
+
+	return responseMessage;
 }
