@@ -12,7 +12,8 @@ DynamicJsonDocument doc(1024);
 String payload = "{\"model\":\"gpt-3.5-turbo\",\"messages\":[{\"role\":\"system\",\"content\":\"Du bist eine KI die sich im Comodore 64 Computer befindet. Der Benutzer wird dir Fragen über den Comodore 64 stellen. Du sollst dem Benutzer helfen, einfache Programme in Basic zu schreiben, die im Comodore 64 laufen können, aber auch kurze Antworten zum Comodore 64 geben. Brich nicht den Charakter.\"},{\"role\":\"user\",\"content\":\"%s\"}],\"temperature\":0.7}";
 
 String serialInput;
-void readSerialInput(String &inputString);
+void readSerialInput(String *inputString);
+String getOpenAiAnswer(String *inputString);
 
 void setup()
 {
@@ -164,7 +165,7 @@ void setup()
 
 void loop()
 {
-	readSerialInput(serialInput);
+	readSerialInput(&serialInput);
 
 	if (true == serialInput.endsWith(String('\n')))
 	{
@@ -174,11 +175,16 @@ void loop()
 	}
 }
 
-void readSerialInput(String &inputString)
+void readSerialInput(String *inputString)
 {
 	while (Serial.available() > 0)
 	{
 		char charReceived = Serial.read();
-		inputString.concat(charReceived);
+		inputString->concat(charReceived);
 	}
+}
+
+String getOpenAiAnswer(String *inputString)
+{
+	return String();
 }
