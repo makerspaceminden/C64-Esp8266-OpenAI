@@ -3,12 +3,13 @@
 #include <ESP8266mDNS.h>
 #include <ESP8266HTTPClient.h>
 #include <WiFiClientSecureBearSSL.h>
+#include <ArduinoJson.h>
 
 #include "config.h"
 #include "cert.h"
 
-// put function declarations here:
-int myFunction(int, int);
+DynamicJsonDocument doc(1024);
+String payload = "{\"model\":\"gpt-3.5-turbo\",\"messages\":[{\"role\":\"system\",\"content\":\"Du bist eine KI die sich im Comodore 64 Computer befindet. Der Benutzer wird dir Fragen über den Comodore 64 stellen. Du sollst dem Benutzer helfen, einfache Programme in Basic zu schreiben, die im Comodore 64 laufen können, aber auch kurze Antworten zum Comodore 64 geben. Brich nicht den Charakter.\"},{\"role\":\"user\",\"content\":\"Schreib mir ein Programm dass 'Hello world' druckt\"}],\"temperature\":0.7}";
 
 void setup()
 {
@@ -123,7 +124,6 @@ void setup()
 	https.begin(client, "https://api.openai.com/v1/chat/completions");
 	https.addHeader("Content-Type", "application/json");
 	https.addHeader("Authorization", OPENAI_TOKEN);
-	String payload = "{\"model\":\"gpt-3.5-turbo\",\"messages\":[{\"role\":\"system\",\"content\":\"Du bist eine KI die sich im Comodore 64 Computer befindet. Der Benutzer wird dir Fragen über den Comodore 64 stellen. Du sollst dem Benutzer helfen, einfache Programme in Basic zu schreiben, die im Comodore 64 laufen können, aber auch kurze Antworten zum Comodore 64 geben. Brich nicht den Charakter.\"},{\"role\":\"user\",\"content\":\"Schreib mir ein Programm dass 'Hello world' druckt\"}],\"temperature\":0.7}";
 	int httpCode = https.POST(payload);
 
 	if (httpCode > 0)
@@ -134,10 +134,12 @@ void setup()
 
 		if (httpCode == HTTP_CODE_OK)
 		{
+			String response = https.getString();
+			// String response = https.getString(1024);  // optionally pre-reserve string to avoid reallocations in chunk mode
+			deserializeJson(doc, response);
+			String responseMessage = doc["choices"][0]["message"]["content"].as<String>();
 #ifdef ESP_DEBUG
-			String payload = https.getString();
-			// String payload = https.getString(1024);  // optionally pre-reserve string to avoid reallocations in chunk mode
-			Serial.println(payload);
+			Serial.println(responseMessage);
 #endif
 		}
 		else
