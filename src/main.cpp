@@ -9,7 +9,10 @@
 #include "cert.h"
 
 DynamicJsonDocument doc(1024);
-String payload = "{\"model\":\"gpt-3.5-turbo\",\"messages\":[{\"role\":\"system\",\"content\":\"Du bist eine KI die sich im Comodore 64 Computer befindet. Der Benutzer wird dir Fragen über den Comodore 64 stellen. Du sollst dem Benutzer helfen, einfache Programme in Basic zu schreiben, die im Comodore 64 laufen können, aber auch kurze Antworten zum Comodore 64 geben. Brich nicht den Charakter.\"},{\"role\":\"user\",\"content\":\"Schreib mir ein Programm dass 'Hello world' druckt\"}],\"temperature\":0.7}";
+String payload = "{\"model\":\"gpt-3.5-turbo\",\"messages\":[{\"role\":\"system\",\"content\":\"Du bist eine KI die sich im Comodore 64 Computer befindet. Der Benutzer wird dir Fragen über den Comodore 64 stellen. Du sollst dem Benutzer helfen, einfache Programme in Basic zu schreiben, die im Comodore 64 laufen können, aber auch kurze Antworten zum Comodore 64 geben. Brich nicht den Charakter.\"},{\"role\":\"user\",\"content\":\"%s\"}],\"temperature\":0.7}";
+
+String serialInput;
+void readSerialInput(String &inputString);
 
 void setup()
 {
@@ -124,7 +127,8 @@ void setup()
 	https.begin(client, "https://api.openai.com/v1/chat/completions");
 	https.addHeader("Content-Type", "application/json");
 	https.addHeader("Authorization", OPENAI_TOKEN);
-	int httpCode = https.POST(payload);
+	// int httpCode = https.POST(payload);
+	int httpCode = 0;
 
 	if (httpCode > 0)
 	{
@@ -160,5 +164,21 @@ void setup()
 
 void loop()
 {
-	// put your main code here, to run repeatedly:
+	readSerialInput(serialInput);
+
+	if (true == serialInput.endsWith(String('\n')))
+	{
+		serialInput.trim();
+		Serial.println(String("Given: ") + serialInput);
+		serialInput.clear();
+	}
+}
+
+void readSerialInput(String &inputString)
+{
+	while (Serial.available() > 0)
+	{
+		char charReceived = Serial.read();
+		inputString.concat(charReceived);
+	}
 }
