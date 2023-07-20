@@ -9,18 +9,22 @@
 #include "cert.h"
 
 DynamicJsonDocument doc(1024);
-String payload = "{\"model\":\"gpt-3.5-turbo\",\"messages\":[{\"role\":\"system\",\"content\":\"Du bist eine KI die sich im Comodore 64 Computer befindet. Der Benutzer wird dir Fragen über den Comodore 64 stellen. Du sollst dem Benutzer helfen, einfache Programme in Basic zu schreiben, die im Comodore 64 laufen können, aber auch kurze Antworten zum Comodore 64 geben. Brich nicht den Charakter.\"},{\"role\":\"user\",\"content\":\"%s\"}],\"temperature\":0.7}";
+String payload = "{\"model\":\"gpt-3.5-turbo\",\"messages\":[{\"role\":\"system\",\"content\":\"Du bist ein Comodore 64 Computer. Der Benutzer wird dir Fragen über den Comodore 64 stellen. Du sollst dem Benutzer helfen, einfache Programme in Basic zu schreiben, die im Comodore 64 laufen können, aber auch kurze Antworten zum Comodore 64 geben. Brich nicht den Charakter.\"},{\"role\":\"user\",\"content\":\"%s\"}],\"temperature\":0.7}";
 
 String serialInput;
-HTTPClient httpClient;
+WiFiClientSecure client;
 
 void readSerialInput(String *inputString);
-String getOpenAiAnswer(HTTPClient *httpClient, String *inputString);
+String getOpenAiAnswer(String *inputString);
 
 void setup()
 {
+#ifndef ESP_DEBUG
+	// When connected with the C64
+	Serial.begin(300);
+#endif
 #ifdef ESP_DEBUG
-	Serial.begin(9600);
+	Serial.begin(115200);
 #endif
 
 	IPAddress ip;
@@ -119,15 +123,11 @@ void setup()
 	Serial.println(WiFi.localIP());
 #endif
 
-	X509List cert(IRG_Root_X1);
+	// X509List cert(IRG_Root_X1);
 
-	WiFiClientSecure client;
-
-	client.setTrustAnchors(&cert);
-
-	httpClient.begin(client, "https://api.openai.com/v1/chat/completions");
-	httpClient.addHeader("Content-Type", "application/json");
-	httpClient.addHeader("Authorization", OPENAI_TOKEN);
+	// client.setTrustAnchors(&cert);
+	// Ignore SSL certificate validation
+	client.setInsecure();
 }
 
 void loop()
@@ -137,7 +137,7 @@ void loop()
 	if (true == serialInput.endsWith(String('\n')))
 	{
 		serialInput.trim();
-		Serial.println(getOpenAiAnswer(&httpClient, &serialInput));
+		Serial.println(getOpenAiAnswer(&serialInput));
 		serialInput.clear();
 	}
 }
@@ -151,11 +151,19 @@ void readSerialInput(String *inputString)
 	}
 }
 
-String getOpenAiAnswer(HTTPClient *httpClient, String *inputString)
+String getOpenAiAnswer(String *inputString)
 {
 	String responseMessage;
-
-	int httpCode = httpClient->POST(payload);
+	HTTPClient httpClient;
+	httpClient.begin(client, "https://api.openai.com/v1/chat/completions");
+	httpClient.addHeader("Content-Type", "application/json");
+	httpClient.addHeader("Authorization", OPENAI_TOKEN);
+	String preparedPayload = payload;
+	preparedPayload.replace("%s", *inputString);
+#ifdef ESP_DEBUG
+	Serial.println(preparedPayload);
+#endif
+	int httpCode = httpClient.POST(preparedPayload);
 
 	if (httpCode > 0)
 	{
@@ -165,21 +173,18 @@ String getOpenAiAnswer(HTTPClient *httpClient, String *inputString)
 
 		if (httpCode == HTTP_CODE_OK)
 		{
-			String response = httpClient->getString();
+			String response = httpClient.getString();
 			// String response = httpClient->getString(1024);  // optionally pre-reserve string to avoid reallocations in chunk mode
 			deserializeJson(doc, response);
 			responseMessage = doc["choices"][0]["message"]["content"].as<String>();
-#ifdef ESP_DEBUG
-			Serial.println(responseMessage);
-#endif
 		}
 		else
 		{
 #ifdef ESP_DEBUG
-			Serial.printf("[HTTPS] POST... failed, error: %s\n", httpClient->errorToString(httpCode).c_str());
+			Serial.printf("[HTTPS] POST... failed, error: %s\n", httpClient.errorToString(httpCode).c_str());
 #endif
 		}
-		httpClient->end();
+		httpClient.end();
 	}
 	else
 	{
