@@ -19,14 +19,7 @@ String getOpenAiAnswer(String *inputString);
 
 void setup()
 {
-#ifndef ESP_DEBUG
-	// When connected with the C64
-	Serial.begin(300);
-#endif
-#ifdef ESP_DEBUG
-	Serial.begin(115200);
-#endif
-
+	Serial.begin(1200);
 	IPAddress ip;
 
 #ifdef IP_ADDRESS
