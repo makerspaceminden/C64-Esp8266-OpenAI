@@ -14,7 +14,7 @@ String payload = "{\"model\":\"gpt-3.5-turbo\",\"messages\":[{\"role\":\"system\
 String serialInput;
 WiFiClientSecure client;
 
-void readSerialInput(String *inputString);
+void slowPrint(String *output);
 String getOpenAiAnswer(String *inputString);
 
 void setup()
@@ -125,22 +125,52 @@ void setup()
 
 void loop()
 {
-	readSerialInput(&serialInput);
-
-	if (true == serialInput.endsWith(String('\n')))
+	if (Serial.available() > 0)
 	{
-		serialInput.trim();
-		Serial.println(getOpenAiAnswer(&serialInput));
+		char charReceived = Serial.read();
+
+		if (charReceived == '\r' || charReceived == '\n')
+		{
+			Serial.print('\r');
+			Serial.print('\n');
+			Serial.print('\r');
+			Serial.print('\n');
+
+			String output = getOpenAiAnswer(&serialInput);
+
+			output.replace("ä", "ae");
+			output.replace("ö", "oe");
+			output.replace("ü", "ue");
+			output.replace("ß", "ss");
+			output.toUpperCase();
+
+			slowPrint(&output);
+			Serial.print('\r');
+			Serial.print('\n');
+			Serial.print('\r');
+			Serial.print('\n');
+
 		serialInput.clear();
+	}
+		else if (20 == charReceived)
+		{
+			serialInput.remove(serialInput.length() - 1, 1);
+			Serial.write(charReceived);
+		}
+		else if (isAscii(charReceived))
+		{
+			serialInput.concat(charReceived);
+			Serial.write(charReceived);
+		}
 	}
 }
 
-void readSerialInput(String *inputString)
+void slowPrint(String *output)
 {
-	while (Serial.available() > 0)
+	for (unsigned int i = 0; i < output->length(); i++)
 	{
-		char charReceived = Serial.read();
-		inputString->concat(charReceived);
+		Serial.print(output->charAt(i));
+		delay(10);
 	}
 }
 
