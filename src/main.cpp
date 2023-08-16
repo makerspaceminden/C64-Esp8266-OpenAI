@@ -156,8 +156,8 @@ void loop()
 			Serial.print('\r');
 			Serial.print('\n');
 
-		serialInput.clear();
-	}
+			serialInput.clear();
+		}
 		else if (20 == charReceived)
 		{
 			serialInput.remove(serialInput.length() - 1, 1);
@@ -197,7 +197,7 @@ String getOpenAiAnswer(String *inputString)
 	if (httpCode > 0)
 	{
 #ifdef ESP_DEBUG
-		Serial.printf("[HTTPS] POST... code: %d\n", httpCode);
+		Serial.printf("[HTTPS] POST... code: %d\r\n", httpCode);
 #endif
 
 		if (httpCode == HTTP_CODE_OK)
@@ -210,7 +210,7 @@ String getOpenAiAnswer(String *inputString)
 		else
 		{
 #ifdef ESP_DEBUG
-			Serial.printf("[HTTPS] POST... failed, error: %s\n", httpClient.errorToString(httpCode).c_str());
+			Serial.printf("[HTTPS] POST... failed, error: %s\r\n", httpClient.errorToString(httpCode).c_str());
 #endif
 		}
 		httpClient.end();
@@ -218,7 +218,7 @@ String getOpenAiAnswer(String *inputString)
 	else
 	{
 #ifdef ESP_DEBUG
-		Serial.printf("[HTTPS] Unable to connect\n");
+		Serial.printf("[HTTPS] Unable to connect\r\n");
 #endif
 	}
 
