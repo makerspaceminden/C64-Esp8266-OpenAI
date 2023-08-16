@@ -109,6 +109,12 @@ void setup()
 #endif
 	}
 
+#ifndef ESP_DEBUG
+	slowPrint(new String("WIFI CONNECTED"));
+	Serial.print('\r');
+	Serial.print('\n');
+#endif
+
 #ifdef ESP_DEBUG
 	Serial.println("");
 	Serial.println("WiFi connected.");
