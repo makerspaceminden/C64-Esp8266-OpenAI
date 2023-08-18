@@ -137,6 +137,7 @@ void loop()
 
 		if (charReceived == '\r' || charReceived == '\n')
 		{
+			Serial.write(30);
 			Serial.print('\r');
 			Serial.print('\n');
 			Serial.print('\r');
@@ -151,6 +152,7 @@ void loop()
 			output.toUpperCase();
 
 			slowPrint(&output);
+			Serial.write(5);
 			Serial.print('\r');
 			Serial.print('\n');
 			Serial.print('\r');
