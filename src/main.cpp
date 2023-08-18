@@ -195,7 +195,7 @@ void slowPrint(String *output)
 	for (unsigned int i = 0; i < output->length(); i++)
 	{
 		Serial.print(output->charAt(i));
-		delay(10);
+		delay(20);
 	}
 }
 
