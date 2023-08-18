@@ -4,6 +4,7 @@
 #include <ESP8266HTTPClient.h>
 #include <WiFiClientSecureBearSSL.h>
 #include <ArduinoJson.h>
+#include <wordwrap.h>
 
 #include "config.h"
 #include "cert.h"
@@ -21,6 +22,7 @@ void setup()
 {
 	Serial.begin(1200);
 	IPAddress ip;
+	wordwrap.crlf = true;
 
 #ifdef IP_ADDRESS
 	if (ip.fromString(IP_ADDRESS))
@@ -151,6 +153,8 @@ void loop()
 
 			String output = getOpenAiAnswer(&serialInput);
 
+			output = wordwrap.wrap(output, 40);
+
 			output.replace("ä", "ae");
 			output.replace("ö", "oe");
 			output.replace("ü", "ue");
@@ -194,7 +198,7 @@ void slowPrint(String *output)
 {
 	for (unsigned int i = 0; i < output->length(); i++)
 	{
-		Serial.print(output->charAt(i));
+		Serial.write(output->charAt(i));
 		delay(20);
 	}
 }
