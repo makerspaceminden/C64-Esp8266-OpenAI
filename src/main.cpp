@@ -155,6 +155,10 @@ void loop()
 			output.replace("ö", "oe");
 			output.replace("ü", "ue");
 			output.replace("ß", "ss");
+			output.replace("Ä", "AE");
+			output.replace("Ö", "OE");
+			output.replace("Ü", "UE");
+			output.replace("SS", "SS");
 			output.toUpperCase();
 
 			slowPrint(&output);
