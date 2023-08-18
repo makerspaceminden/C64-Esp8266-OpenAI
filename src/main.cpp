@@ -137,11 +137,17 @@ void loop()
 
 		if (charReceived == '\r' || charReceived == '\n')
 		{
+			delay(20);
 			Serial.write(30);
+			delay(20);
 			Serial.print('\r');
+			delay(20);
 			Serial.print('\n');
+			delay(20);
 			Serial.print('\r');
+			delay(20);
 			Serial.print('\n');
+			delay(20);
 
 			String output = getOpenAiAnswer(&serialInput);
 
@@ -152,11 +158,18 @@ void loop()
 			output.toUpperCase();
 
 			slowPrint(&output);
+
+			delay(20);
 			Serial.write(5);
+			delay(20);
 			Serial.print('\r');
+			delay(20);
 			Serial.print('\n');
+			delay(20);
 			Serial.print('\r');
+			delay(20);
 			Serial.print('\n');
+			delay(20);
 
 			serialInput.clear();
 		}
